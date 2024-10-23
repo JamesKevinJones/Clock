@@ -13,7 +13,7 @@ const Clock = () => {
     setInterval(UpdateTime)
 
     let options = {
-        width: "600px",
+        width: "550px",
         border: false,
         baseColor: "#dbe9f4",
         centerColor: "",
