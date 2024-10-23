@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar'
 import AnalogClock from "analog-clock-react"
 
 const Clock = () => {
+    // Digital Clock Setup
     let time = new Date().toLocaleTimeString()
 
     const [cTime, setCTime] = useState(time)
@@ -12,6 +13,7 @@ const Clock = () => {
     }
     setInterval(UpdateTime)
 
+    // Analog Clock Setup
     let options = {
         width: "550px",
         border: false,
@@ -28,8 +30,10 @@ const Clock = () => {
             <Navbar name="Clock" />
             <div className="flex w-full justify-center items-center flex-col flex-1">
                 <h1 className='text-[#FFFFFF] text-5xl'>Digilog</h1>
+                {/* Rendering Analog Clock */}
                 <div className='flex items-center justify-center flex-col-reverse'>
                     <AnalogClock {...options}/>
+                    {/* Rendering Digital Clock */}
                     <div className='relative z-10 top-60'>
                         <p className='relative  text-[#263681] text-8xl'>{cTime}</p>
                     </div>
