@@ -28,8 +28,8 @@ const Clock = () => {
     return (
         <div className='bg-gray-900 flex flex-col max-w-screen min-h-screen overflow-hidden'>
             <Navbar name="Clock" />
+            <h1 className='text-5xl flex justify-center items-center pt-8 text-white'>Digilog</h1>
             <div className="flex w-full justify-center items-center flex-col flex-1">
-                <h1 className='text-5xl flex justify-center items-center pt-8 text-white'>Digilog</h1>
                 {/* Rendering Analog Clock */}
                 <div className='flex items-center justify-center flex-col-reverse'>
                     <AnalogClock {...options}/>
