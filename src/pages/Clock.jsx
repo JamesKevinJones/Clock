@@ -35,7 +35,7 @@ const Clock = () => {
                     <AnalogClock {...options}/>
                     {/* Rendering Digital Clock */}
                     <div className='relative z-10 top-60'>
-                        <p className='relative  text-[#263681] text-9xl'>{cTime}</p>
+                        <p className='relative  text-[#263681] text-8xl'>{cTime}</p>
                     </div>
                 </div>
             </div>
