@@ -24,7 +24,7 @@ const Clock = () => {
         },
     }
     return (
-        <div className='bg-gray-900 flex flex-col max-w-screen min-h-screen'>
+        <div className='bg-gray-900 flex flex-col max-w-screen min-h-screen overflow-hidden'>
             <Navbar name="Clock" />
             <div className="flex w-full justify-center items-center flex-col flex-1">
                 <h1 className='text-[#FFFFFF] text-5xl'>Digilog</h1>
