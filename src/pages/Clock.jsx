@@ -8,7 +8,7 @@ const Clock = () => {
 
     const [cTime, setCTime] = useState(time)
     const UpdateTime=()=>{
-        time =  new Date().toLocaleTimeString()
+        time =  new Date().toLocaleTimeString('en-US', { hour12: false });
         setCTime(time)
     }
     setInterval(UpdateTime)
