@@ -4,11 +4,11 @@ import AnalogClock from "analog-clock-react"
 
 const Clock = () => {
     // Digital Clock Setup
-    let time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    let time = new Date().toLocaleTimeString('en-US', { hour12: true });
 
     const [cTime, setCTime] = useState(time)
     const UpdateTime=()=>{
-        time =  new Date().toLocaleTimeString('en-US', { hour12: false });
+        time =  new Date().toLocaleTimeString('en-US', { hour12: true });
         setCTime(time)
     }
     setInterval(UpdateTime)
