@@ -4,7 +4,7 @@ import AnalogClock from "analog-clock-react"
 
 const Clock = () => {
     // Digital Clock Setup
-    let time = new Date().toLocaleTimeString()
+    let time = new Date().toLocaleTimeString('en-US', { hour12: false });
 
     const [cTime, setCTime] = useState(time)
     const UpdateTime=()=>{
