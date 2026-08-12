@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import Board from '../components/Board'
 import { FlapText } from '../components/Flap'
 
@@ -10,7 +10,7 @@ export default function Clock() {
   useEffect(() => {
     // One interval, cleaned up on unmount. The previous version called
     // setInterval during render, which created a new timer on every tick.
-    const id = setInterval(() => setNow(new Date()), 250)
+    const id = setInterval(() => setNow(new Date()), 200)
     return () => clearInterval(id)
   }, [])
 

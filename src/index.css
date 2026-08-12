@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=Archivo:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=Archivo:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -29,7 +29,7 @@
 
   --flap-w: 0.66em;
   --flap-gap: 0.055em;
-  --flip-ms: 300ms;
+  --flip-ms: 220ms;
 }
 
 * { box-sizing: border-box; }
@@ -215,56 +215,56 @@ body {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
 }
 
-.flap__half {
+/* The resting face. Always shows the current character in full, so a digit
+   is never unreadable — the leaves above it are decoration, not the value. */
+.flap__face {
   position: absolute;
-  left: 0;
-  width: 100%;
-  height: 50%;
-  overflow: hidden;
-  background: var(--flap);
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--ink);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #f5f1e8 0%, var(--flap) 50%, #e3ddd0 50%, #ded8ca 100%);
 }
 
-.flap__half--top {
-  top: 0;
-  border-radius: 3px 3px 0 0;
-  border-bottom: 1px solid var(--flap-edge);
-  background: linear-gradient(180deg, #f5f1e8, var(--flap));
-}
-
-.flap__half--bottom {
-  bottom: 0;
-  border-radius: 0 0 3px 3px;
-  background: linear-gradient(180deg, var(--flap), #ded8ca);
-}
-
-/* The glyph is drawn full-height inside each half and clipped, so the two
-   halves read as one character split across the fold. */
-.flap__glyph {
+/* The seam between the two leaves. */
+.flap__fold {
   position: absolute;
   left: 0;
-  width: 100%;
-  height: 200%;
-  line-height: 1.24em;
-  text-align: center;
-  font-style: normal;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--flap-edge);
+  z-index: 3;
 }
-.flap__half--top    .flap__glyph { top: 0; }
-.flap__half--bottom .flap__glyph { bottom: 0; }
 
-.flap__anim {
+.flap__leaf {
   position: absolute;
   left: 0;
   width: 100%;
   height: 50%;
   overflow: hidden;
-  background: var(--flap);
   color: var(--ink);
   backface-visibility: hidden;
   z-index: 2;
 }
 
-.flap__anim--front {
+/* Inside a leaf the glyph is drawn at full flap height and clipped, so the
+   leaf carries exactly one half of the character. */
+.flap__glyph {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1.24em;
+  line-height: 1.24em;
+  text-align: center;
+  font-style: normal;
+}
+.flap__leaf--top    .flap__glyph { top: 0; }
+.flap__leaf--bottom .flap__glyph { bottom: 0; }
+
+.flap__leaf--top {
   top: 0;
   transform-origin: bottom center;
   border-radius: 3px 3px 0 0;
@@ -273,12 +273,12 @@ body {
   animation: flap-fall calc(var(--flip-ms) / 2) cubic-bezier(0.4, 0, 0.9, 0.5) forwards;
 }
 
-.flap__anim--back {
+.flap__leaf--bottom {
   bottom: 0;
   transform-origin: top center;
   transform: rotateX(90deg);
   border-radius: 0 0 3px 3px;
-  background: linear-gradient(180deg, var(--flap), #ded8ca);
+  background: linear-gradient(180deg, #e3ddd0, #ded8ca);
   animation: flap-land calc(var(--flip-ms) / 2) cubic-bezier(0.1, 0.6, 0.3, 1) calc(var(--flip-ms) / 2) forwards;
 }
 

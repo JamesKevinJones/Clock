@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 
-const FLIP_MS = 300
+const FLIP_MS = 220
 
 /**
  * One split-flap character.
  *
- * The top half shows the incoming value immediately and the bottom half holds
- * the outgoing one, exactly as a mechanical board does: the leaf falls to
- * reveal what is already set behind it.
+ * The resting layer always shows the current character in full, so the value
+ * is readable at every moment. The two leaves are transient and sit on top:
+ * the outgoing character's upper half falls, then the incoming character's
+ * lower half swings up. If the animation is interrupted or skipped, the face
+ * underneath is still correct.
  */
 export function Flap({ char }) {
   const [outgoing, setOutgoing] = useState(char)
@@ -29,19 +31,15 @@ export function Flap({ char }) {
 
   return (
     <span className="flap" aria-hidden="true">
-      <span className="flap__half flap__half--top">
-        <i className="flap__glyph">{char}</i>
-      </span>
-      <span className="flap__half flap__half--bottom">
-        <i className="flap__glyph">{outgoing}</i>
-      </span>
+      <span className="flap__face">{char}</span>
+      <span className="flap__fold" />
 
       {flipping && (
         <>
-          <span className="flap__anim flap__anim--front">
+          <span className="flap__leaf flap__leaf--top">
             <i className="flap__glyph">{outgoing}</i>
           </span>
-          <span className="flap__anim flap__anim--back">
+          <span className="flap__leaf flap__leaf--bottom">
             <i className="flap__glyph">{char}</i>
           </span>
         </>
