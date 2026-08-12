@@ -1,69 +1,77 @@
-import { useState, useEffect, useRef } from 'react'
-import Navbar from '../components/Navbar'
+import { useEffect, useRef, useState } from 'react'
+import Board from '../components/Board'
+import { FlapText } from '../components/Flap'
 
-const Stopwatch = () => {
-    const [IsRunning,setIsRunning] = useState(false);
-    const [ElapsedTime,setElapsedTime] = useState(0);
-    const IntervalIdRef = useRef(null);
-    const StartTimeRef = useRef(0);
+const pad = (n, width = 2) => String(n).padStart(width, '0')
 
-    useEffect(() => {
-        IntervalIdRef.current = setInterval(() => {
-            if (IsRunning) {
-                setElapsedTime(Date.now() - StartTimeRef.current)
-            }
-        }, 10)
+export default function Stopwatch() {
+  const [running, setRunning] = useState(false)
+  const [elapsed, setElapsed] = useState(0)
+  const [laps, setLaps] = useState([])
+  const startedAt = useRef(0)
 
-        return () => {
-            clearInterval(IntervalIdRef.current)
-        }
-    }, [IsRunning])
+  useEffect(() => {
+    if (!running) return
+    startedAt.current = Date.now() - elapsed
+    const id = setInterval(() => setElapsed(Date.now() - startedAt.current), 40)
+    return () => clearInterval(id)
+    // elapsed is intentionally omitted: including it would restart the
+    // interval on every tick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running])
 
-    function Start() {
-        setIsRunning(true)
-        StartTimeRef.current = Date.now() - ElapsedTime
-    }
-    function Pause() {
-        setIsRunning(false);
-    }
-    function Reset() {
-        setIsRunning(false);
-        setElapsedTime(0);
-    }
+  const format = (ms) => {
+    const minutes = Math.floor(ms / 60000)
+    const seconds = Math.floor((ms / 1000) % 60)
+    const hundredths = Math.floor((ms % 1000) / 10)
+    return `${pad(minutes)}:${pad(seconds)}.${pad(hundredths)}`
+  }
 
-    function FormatTime() {
+  const reset = () => {
+    setRunning(false)
+    setElapsed(0)
+    setLaps([])
+  }
 
-        let Hours =Math.floor(ElapsedTime / (1000 * 60 * 60));
-        let Minutes =Math.floor(ElapsedTime / (1000 * 60) % 60);
-        let Seconds =Math.floor(ElapsedTime / (1000 ) % 60);
-        let Miliseconds =Math.floor((ElapsedTime % 1000) / 10);
+  return (
+    <Board eyebrow="Elapsed">
+      <FlapText value={format(elapsed)} size="xl" label={`Elapsed ${format(elapsed)}`} />
 
-        Hours = String(Hours).padStart(2, "0");
-        Minutes = String(Minutes).padStart(2, "0");
-        Seconds = String(Seconds).padStart(2, "0");
-        Miliseconds = String(Miliseconds).padStart(2, "0");
-        
-        return `${Hours}:${Minutes}:${Seconds}:${Miliseconds}`
-    }
+      <p className="readout">
+        <span className="lamp" data-on={String(running)} />
+        {running ? 'Running' : elapsed ? 'Stopped' : 'Ready'}
+        {laps.length > 0 && ` · ${laps.length} lap${laps.length > 1 ? 's' : ''}`}
+      </p>
 
-    return (
-        <div className='bg-gray-900 flex flex-col text-white max-w-screen min-h-screen'>
-            <Navbar name="Stopwatch"/>
-            <h1 className='text-5xl flex justify-center items-center pt-8'>StopWatch</h1>
-            <div className='flex justify-center items-center flex-col flex-1 content-center'>
-                <div className='h-[350px] w-[650px] border-2 border-white/[0.2] bg-white/[0.1] flex justify-center items-center rounded-3xl'>
-                    <div className='space-y-4'>
-                        <h1 className='text-center font-bold text-8xl text-white'>{FormatTime()}</h1>
-                        <div className='text-center space-x-2 pt-3'>
-                            <button onClick={Start} className='px-4 py-2 rounded-2xl text-white cursor-pointer font-semibold bg-green-500/70 text-3xl scale-[1] hover:scale-[1.03] transition-all ease-out duration-300'>Start</button>
-                            <button onClick={Pause}  className='px-4 py-2 rounded-2xl text-white cursor-pointer font-semibold bg-blue-500/70 text-3xl scale-[1] hover:scale-[1.03] transition-all ease-out duration-300'>Pause</button>
-                            <button onClick={Reset}  className='px-4 py-2 rounded-2xl text-white cursor-pointer font-semibold bg-red-500/70 text-3xl scale-[1] hover:scale-[1.03] transition-all ease-out duration-300'>Reset</button>
-                        </div>
-                    </div>
-                </div>
+      <div className="controls">
+        <button className="btn btn--primary" onClick={() => setRunning((r) => !r)}>
+          {running ? 'Stop' : elapsed ? 'Resume' : 'Start'}
+        </button>
+        <button
+          className="btn"
+          onClick={() => setLaps((l) => [elapsed, ...l])}
+          disabled={!running}
+        >
+          Lap
+        </button>
+        <button className="btn btn--danger" onClick={reset} disabled={!elapsed}>
+          Reset
+        </button>
+      </div>
+
+      {laps.length > 0 && (
+        <div className="departures">
+          {laps.map((lap, i) => (
+            <div className="dep-row" key={`${lap}-${i}`}>
+              <div className="dep-city">Lap {laps.length - i}</div>
+              <FlapText value={format(lap)} size="sm" />
+              <span className="dep-offset">
+                {i === laps.length - 1 ? '—' : `+${format(lap - laps[i + 1])}`}
+              </span>
             </div>
+          ))}
         </div>
-    )
+      )}
+    </Board>
+  )
 }
-
-export default Stopwatch

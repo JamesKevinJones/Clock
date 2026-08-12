@@ -1,46 +1,36 @@
-import { useState } from 'react'
-import Navbar from '../components/Navbar'
-import AnalogClock from "analog-clock-react"
+import { useEffect, useState } from 'react'
+import Board from '../components/Board'
+import { FlapText } from '../components/Flap'
 
-const Clock = () => {
-    // Digital Clock Setup
-    let time = new Date().toLocaleTimeString('en-US', { hour12: false });
+const pad = (n) => String(n).padStart(2, '0')
 
-    const [cTime, setCTime] = useState(time)
-    const UpdateTime=()=>{
-        time =  new Date().toLocaleTimeString('en-US', { hour12: false });
-        setCTime(time)
-    }
-    setInterval(UpdateTime)
+export default function Clock() {
+  const [now, setNow] = useState(() => new Date())
 
-    // Analog Clock Setup
-    let options = {
-        width: "550px",
-        border: false,
-        baseColor: "#dbe9f4",
-        centerColor: "",
-        handColors: {
-            second: "#e7190c",
-            minute: "#50e750",
-            hour: "#0d35e8"
-        },
-    }
-    return (
-        <div className='bg-gray-900 flex flex-col max-w-screen min-h-screen overflow-hidden'>
-            <Navbar name="Clock" />
-            <h1 className='text-5xl flex justify-center items-center pt-8 text-white'>Digilog</h1>
-            <div className="flex w-full justify-center items-center flex-col flex-1">
-                {/* Rendering Analog Clock */}
-                <div className='flex items-center justify-center flex-col-reverse'>
-                    <AnalogClock {...options}/>
-                    {/* Rendering Digital Clock */}
-                    <div className='relative z-10 top-60'>
-                        <p className='relative  text-[#263681] text-8xl'>{cTime}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
+  useEffect(() => {
+    // One interval, cleaned up on unmount. The previous version called
+    // setInterval during render, which created a new timer on every tick.
+    const id = setInterval(() => setNow(new Date()), 250)
+    return () => clearInterval(id)
+  }, [])
+
+  const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+  const date = now
+    .toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' })
+    .toUpperCase()
+    .replace(/,/g, '')
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+  return (
+    <Board eyebrow="Local time">
+      <FlapText value={time} size="xl" label={`Current time ${time}`} />
+
+      <FlapText value={date} size="sm" label={date} />
+
+      <p className="readout">
+        <span className="lamp" data-on="true" />
+        {zone} · 24 hour
+      </p>
+    </Board>
+  )
 }
-
-export default Clock

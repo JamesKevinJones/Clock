@@ -1,60 +1,115 @@
-import { useState,useEffect} from "react";
-import Navbar from '../components/Navbar'
-
+import { useEffect, useMemo, useState } from 'react'
+import Board from '../components/Board'
+import { FlapText } from '../components/Flap'
 import times from '../times.js'
 
-const World = () => {
-    const [time,setTime]=useState("");
-    const [world, setWorld]=useState([]);
-    useEffect(()=>{
-        const api = async () => {
-            try{
-                const response =await fetch(`https://timeapi.io/api/time/current/zone?timeZone=${time}`);
-    
-                if(!response.ok){
-                    throw new Error("Could'nt fetch the resource");
-                }
-                const data = await response.json();
-                setWorld(() => {
-                    return data;
-                });
-                console.log(world);
-            }
-            catch(error){
-                console.error(error);
-            }
-        }
-        api();
-    }, [time]);
+const STORE_KEY = 'digilog.zones'
 
-    const handleChange = (e)=>{
-        setTime(e.target.value);
-        console.log() 
-    }
+const DEFAULT_ZONES = [
+  'Asia/Kolkata',
+  'Europe/London',
+  'America/New_York',
+  'Asia/Tokyo',
+]
 
-    return (
-        <div className='bg-gray-900 max-w-screen flex flex-col min-h-screen text-white'>
-            <Navbar name="World Clock"/>
-            <h1 className='text-5xl flex justify-center items-center pt-8'>World Clock</h1>
-            <div className="flex w-full justify-center items-center flex-1 flex-col">
-                <select value={time} onChange={handleChange} className="text-white text-xl p-4 rounded-lg bg-white/[0.1] border-white/[0.2] border-2">
-                    <option className="text-black">Select Timezones</option>
-                    {times.map(zones => (
-                        <option key={zones} value={zones} className="text-black" >
-                            {zones}
-                        </option>
-                    ))}
-                </select>
-                <div className="flex space-x-36 w-fit text-white border-solid border-[2px] rounded-lg p-4 mt-11">
-                    <div>
-                        <p className="text-3xl">{world.timeZone ?  world.timeZone : "Loading..."}</p>
-                        <p>Today</p>
-                    </div>
-                    <p className="text-6xl">{world.time ? world.time : "00:00"}</p>
-                </div>
-            </div>
-        </div>
-    )
+const cityOf = (zone) => zone.split('/').pop().replace(/_/g, ' ')
+
+const timeIn = (zone) =>
+  new Intl.DateTimeFormat('en-GB', {
+    timeZone: zone, hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(new Date())
+
+const offsetOf = (zone) => {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: zone, timeZoneName: 'shortOffset',
+  }).formatToParts(new Date())
+  return parts.find((p) => p.type === 'timeZoneName')?.value ?? ''
 }
 
-export default World
+const dayOf = (zone) =>
+  new Intl.DateTimeFormat('en-GB', { timeZone: zone, weekday: 'short' })
+    .format(new Date())
+    .toUpperCase()
+
+export default function World() {
+  const [zones, setZones] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORE_KEY))
+      return Array.isArray(saved) && saved.length ? saved : DEFAULT_ZONES
+    } catch {
+      return DEFAULT_ZONES
+    }
+  })
+  const [, setTick] = useState(0)
+
+  // Times are computed locally with Intl, so the board keeps working offline.
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem(STORE_KEY, JSON.stringify(zones))
+  }, [zones])
+
+  const available = useMemo(
+    () => times.filter((zone) => !zones.includes(zone)),
+    [zones],
+  )
+
+  const addZone = (event) => {
+    const zone = event.target.value
+    if (zone) setZones((current) => [...current, zone])
+    event.target.value = ''
+  }
+
+  const removeZone = (zone) =>
+    setZones((current) => current.filter((z) => z !== zone))
+
+  return (
+    <Board eyebrow="Departures">
+      <div className="field-group" style={{ alignItems: 'center' }}>
+        <label className="field-label" htmlFor="add-zone">Add a city</label>
+        <select id="add-zone" className="field" defaultValue="" onChange={addZone}>
+          <option value="">Select a time zone…</option>
+          {available.map((zone) => (
+            <option key={zone} value={zone}>{zone.replace(/_/g, ' ')}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="departures">
+        {zones.length === 0 && (
+          <p className="empty-note">No cities on the board. Add one above.</p>
+        )}
+
+        {zones.map((zone) => (
+          <div className="dep-row" key={zone}>
+            <div>
+              <div className="dep-city">{cityOf(zone)}</div>
+              <div className="dep-zone">{zone}</div>
+            </div>
+
+            <FlapText
+              value={timeIn(zone)}
+              size="sm"
+              label={`${cityOf(zone)} ${timeIn(zone)}`}
+            />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span className="dep-offset">{dayOf(zone)} · {offsetOf(zone)}</span>
+              <button
+                className="icon-btn"
+                onClick={() => removeZone(zone)}
+                aria-label={`Remove ${cityOf(zone)}`}
+                title={`Remove ${cityOf(zone)}`}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Board>
+  )
+}

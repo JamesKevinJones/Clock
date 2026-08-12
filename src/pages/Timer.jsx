@@ -1,154 +1,104 @@
-import Navbar from '../components/Navbar'
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react'
+import Board from '../components/Board'
+import { FlapText } from '../components/Flap'
 
-const CountdownTimer = () => {
-    const [hours, setHours] = useState(0);
-    const [minutes, setMinutes] = useState(0);
-    const [seconds, setSeconds] = useState(0);
-    const [timeInSeconds, setTimeInSeconds] = useState(0); // Total time in seconds
-    const [isActive, setIsActive] = useState(false);
-    const [isPaused, setIsPaused] = useState(false);
+const pad = (n) => String(n).padStart(2, '0')
+const clamp = (value, max) => Math.min(max, Math.max(0, Number(value) || 0))
 
-    // Convert hours, minutes, and seconds to total seconds
-    useEffect(() => {
-        setTimeInSeconds(hours * 3600 + minutes * 60 + seconds);
-    }, [hours, minutes, seconds]);
+export default function Timer() {
+  const [hours, setHours] = useState(0)
+  const [minutes, setMinutes] = useState(5)
+  const [seconds, setSeconds] = useState(0)
+  const [remaining, setRemaining] = useState(0)
+  const [running, setRunning] = useState(false)
+  const [finished, setFinished] = useState(false)
+  const armed = useRef(false)
 
-    // Countdown logic
-    useEffect(() => {
-        let interval = null;
+  const configured = hours * 3600 + minutes * 60 + seconds
 
-        if (isActive && !isPaused && timeInSeconds > 0) {
-            interval = setInterval(() => {
-                setTimeInSeconds((prevTime) => prevTime - 1);
-            }, 1000);
-        } else if (timeInSeconds === 0 && isActive) {
-            setIsActive(false);
-            alert("Time's up!");
+  useEffect(() => {
+    if (!running) return
+
+    const id = setInterval(() => {
+      setRemaining((current) => {
+        if (current <= 1) {
+          setRunning(false)
+          setFinished(true)
+          return 0
         }
+        return current - 1
+      })
+    }, 1000)
 
-        return () => clearInterval(interval);
-    }, [isActive, isPaused, timeInSeconds]);
+    return () => clearInterval(id)
+  }, [running])
 
-    // Format time as hh:mm:ss
-    const formatTime = () => {
-        const hrs = Math.floor(timeInSeconds / 3600);
-        const mins = Math.floor((timeInSeconds % 3600) / 60);
-        const secs = timeInSeconds % 60;
-        return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
+  const start = () => {
+    if (configured === 0) return
+    if (!armed.current || remaining === 0) {
+      setRemaining(configured)
+      armed.current = true
+    }
+    setFinished(false)
+    setRunning(true)
+  }
 
-    // Start the countdown
-    const handleStart = () => {
-        if (timeInSeconds > 0) {
-            setIsActive(true);
-            setIsPaused(false);
-        }
-    };
+  const reset = () => {
+    setRunning(false)
+    setFinished(false)
+    setRemaining(0)
+    armed.current = false
+  }
 
-    // Pause the countdown
-    const handlePause = () => {
-        setIsPaused(true);
-    };
+  const display = running || remaining > 0 || finished ? remaining : configured
+  const label = `${pad(Math.floor(display / 3600))}:${pad(Math.floor((display % 3600) / 60))}:${pad(display % 60)}`
 
-    // Resume the countdown
-    const handleResume = () => {
-        setIsPaused(false);
-    };
+  return (
+    <Board eyebrow="Countdown">
+      <FlapText value={label} size="xl" label={`Remaining ${label}`} />
 
-    // Reset the countdown
-    const handleReset = () => {
-        setIsActive(false);
-        setIsPaused(false);
-        setHours(0);
-        setMinutes(0);
-        setSeconds(0);
-        setTimeInSeconds(0);
-    };
+      <p className="readout">
+        <span className="lamp" data-on={String(running || finished)} />
+        {finished ? "Time's up" : running ? 'Counting down' : 'Set a duration'}
+      </p>
 
-    return (
-        <div className='text-white bg-gray-900 max-w-screen min-h-screen flex flex-col'>
-            <Navbar name="Timer"/>
-            <h1 className="text-5xl flex justify-center items-center pt-8">Countdown Timer</h1>
-            <div className='flex w-full justify-center items-center flex-1 '>
-                <div className="text-black text-3xl p-8 rounded-lg bg-white/[0.1] border-white/[0.2] border-2 w-fit">
-                    <div className="flex space-x-16 mb-6  "> 
-                        <div>
-                            <label className="block text-sm font-medium text-white">Hours</label>
-                            <input
-                                type="number"
-                                min="0"
-                                value={hours}
-                                onChange={(e) => setHours(Math.max(0, parseInt(e.target.value) || 0))}
-                                className="w-20 px-2 py-1 font-poppins text-center border rounded"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-white">Minutes</label>
-                            <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                value={minutes}
-                                onChange={(e) => setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
-                                className="w-20 px-2 py-1 font-poppins text-center border rounded"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-white">Seconds</label>
-                            <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                value={seconds}
-                                onChange={(e) => setSeconds(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
-                                className="w-20 px-2 py-1 font-poppins text-center border rounded"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Display countdown */}
-                    <div className="text-5xl font-poppins text-center bg-white px-10 py-4 rounded-lg shadow-md mb-6">
-                        {formatTime()}
-                    </div>
-
-                    {/* Buttons for control */}
-                    <div className="space-x-28">
-                        {!isActive && (
-                            <button 
-                                onClick={handleStart} 
-                                className="bg-green-500 hover:bg-green-600  text-white w-32 font-semibold text-2xl py-2 px-4 rounded-2xl"
-                            >
-                                Start
-                            </button>
-                        )}
-                        {isActive && !isPaused && (
-                            <button 
-                                onClick={handlePause} 
-                                className="bg-yellow-500 hover:bg-yellow-600 text-white w-32 text-2xl font-semibold py-2 px-4 rounded-2xl"
-                            >
-                                Pause
-                            </button>
-                        )}
-                        {isActive && isPaused && (
-                            <button 
-                                onClick={handleResume} 
-                                className="bg-blue-500 hover:bg-blue-600 text-white text-2xl w-32 font-semibold py-2 px-4 rounded-2xl"
-                            >
-                                Resume
-                            </button>
-                        )}
-                            <button 
-                            onClick={handleReset} 
-                            className="bg-red-500 hover:bg-red-600 text-white  text-2xl w-32 font-semibold py-2 px-4 rounded-2xl"
-                            >
-                                Reset
-                            </button>
-                    </div>
-                </div>
+      {!running && (
+        <div className="field-row">
+          {[
+            ['Hours', hours, (v) => setHours(clamp(v, 99)), 99],
+            ['Minutes', minutes, (v) => setMinutes(clamp(v, 59)), 59],
+            ['Seconds', seconds, (v) => setSeconds(clamp(v, 59)), 59],
+          ].map(([name, value, onChange, max]) => (
+            <div className="field-group" key={name}>
+              <label className="field-label" htmlFor={name}>{name}</label>
+              <input
+                id={name}
+                className="field"
+                type="number"
+                min="0"
+                max={max}
+                value={value}
+                onChange={(e) => { onChange(e.target.value); armed.current = false }}
+              />
             </div>
+          ))}
         </div>
-    );
-};
+      )}
 
-export default CountdownTimer;
+      <div className="controls">
+        {running ? (
+          <button className="btn btn--primary" onClick={() => setRunning(false)}>
+            Pause
+          </button>
+        ) : (
+          <button className="btn btn--primary" onClick={start} disabled={configured === 0 && remaining === 0}>
+            {remaining > 0 ? 'Resume' : 'Start'}
+          </button>
+        )}
+        <button className="btn btn--danger" onClick={reset} disabled={!running && remaining === 0 && !finished}>
+          Reset
+        </button>
+      </div>
+    </Board>
+  )
+}

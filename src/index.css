@@ -1,11 +1,486 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=Archivo:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-    html {
-        font-family: "Poppins", sans-serif;
-    }
+/* ------------------------------------------------------------------
+   Digilog — a split-flap departure board that happens to tell time.
+   The cabinet is the interface; every value that changes, flips.
+   ------------------------------------------------------------------ */
+
+:root {
+  color-scheme: dark;
+
+  --cabinet:       #1b3a3f;
+  --cabinet-deep:  #12292d;
+  --cabinet-lip:   #266066;
+  --flap:          #ede8dc;
+  --flap-edge:     #cfc8b7;
+  --flap-deep:     #b9b2a0;
+  --ink:           #12171a;
+  --signal:        #c2452e;
+  --brass:         #b08d3f;
+  --chalk:         #e6ede9;
+  --chalk-dim:     #9fb3b2;
+
+  --rail:          rgba(237, 232, 220, 0.14);
+  --rail-strong:   rgba(237, 232, 220, 0.28);
+
+  --flap-w: 0.66em;
+  --flap-gap: 0.055em;
+  --flip-ms: 300ms;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: "Archivo", system-ui, sans-serif;
+  color: var(--chalk);
+  background:
+    radial-gradient(120% 80% at 50% -10%, #24494e 0%, var(--cabinet-deep) 62%, #0d1f22 100%);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- shell -------------------------------------------------- */
+
+.shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(0.75rem, 2.5vw, 2rem);
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+}
+
+.cabinet {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, var(--cabinet) 0%, var(--cabinet-deep) 100%);
+  border: 1px solid var(--cabinet-lip);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -18px 40px rgba(0, 0, 0, 0.35),
+    0 24px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+/* Brass fixings — the cabinet is bolted to the wall. */
+.cabinet::before,
+.cabinet::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e0c179, var(--brass) 60%, #6d5623);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+.cabinet::before { left: 12px; }
+.cabinet::after  { right: 12px; }
+
+/* ---------- header + nav ------------------------------------------- */
+
+.board-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  padding: clamp(1rem, 2.4vw, 1.6rem) clamp(1.1rem, 3vw, 2.2rem) 0.9rem;
+  border-bottom: 1px solid var(--rail);
+}
+
+.wordmark {
+  font-family: "Archivo Narrow", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.15rem, 2.6vw, 1.6rem);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  margin: 0;
+  color: var(--flap);
+}
+
+.wordmark span { color: var(--signal); }
+
+.head-meta {
+  font-family: "Space Mono", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--chalk-dim);
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 0 clamp(1.1rem, 3vw, 2.2rem);
+  border-bottom: 1px solid var(--rail);
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.nav a {
+  position: relative;
+  font-family: "Archivo Narrow", sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--chalk-dim);
+  padding: 0.85rem 0;
+  margin-right: clamp(1.1rem, 3.5vw, 2.4rem);
+  transition: color 160ms ease;
+}
+
+.nav a:hover { color: var(--flap); }
+
+.nav a[aria-current="page"] { color: var(--flap); }
+
+.nav a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--signal);
+}
+
+/* ---------- stage --------------------------------------------------- */
+
+.stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.1rem, 3vw, 2rem);
+  padding: clamp(1.2rem, 4vw, 3rem) clamp(1rem, 3vw, 2.2rem);
+}
+
+.eyebrow {
+  font-family: "Space Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--chalk-dim);
+  margin: 0;
+}
+
+/* ---------- the flap ------------------------------------------------ */
+
+.flaps {
+  display: flex;
+  align-items: center;
+  gap: var(--flap-gap);
+  font-family: "Archivo Narrow", sans-serif;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.flaps--xl   { font-size: clamp(3.2rem, 15vw, 8.5rem); }
+.flaps--lg   { font-size: clamp(2.2rem, 9vw, 4.5rem); }
+.flaps--sm   { font-size: clamp(1.1rem, 3.4vw, 1.7rem); }
+
+.flap-sep {
+  color: var(--flap);
+  opacity: 0.55;
+  padding: 0 0.06em;
+  font-size: 0.72em;
+  /* The colon does not flip — only values that change do. */
+}
+
+/* A gap between words, so "WED 12 AUG" reads as three groups. */
+.flap-space {
+  display: inline-block;
+  width: 0.32em;
+}
+
+.flap {
+  position: relative;
+  display: inline-block;
+  width: var(--flap-w);
+  height: 1.24em;
+  perspective: 340px;
+  border-radius: 3px;
+  background: var(--flap-deep);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+
+.flap__half {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  overflow: hidden;
+  background: var(--flap);
+  color: var(--ink);
+}
+
+.flap__half--top {
+  top: 0;
+  border-radius: 3px 3px 0 0;
+  border-bottom: 1px solid var(--flap-edge);
+  background: linear-gradient(180deg, #f5f1e8, var(--flap));
+}
+
+.flap__half--bottom {
+  bottom: 0;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(180deg, var(--flap), #ded8ca);
+}
+
+/* The glyph is drawn full-height inside each half and clipped, so the two
+   halves read as one character split across the fold. */
+.flap__glyph {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  line-height: 1.24em;
+  text-align: center;
+  font-style: normal;
+}
+.flap__half--top    .flap__glyph { top: 0; }
+.flap__half--bottom .flap__glyph { bottom: 0; }
+
+.flap__anim {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  overflow: hidden;
+  background: var(--flap);
+  color: var(--ink);
+  backface-visibility: hidden;
+  z-index: 2;
+}
+
+.flap__anim--front {
+  top: 0;
+  transform-origin: bottom center;
+  border-radius: 3px 3px 0 0;
+  border-bottom: 1px solid var(--flap-edge);
+  background: linear-gradient(180deg, #f5f1e8, var(--flap));
+  animation: flap-fall calc(var(--flip-ms) / 2) cubic-bezier(0.4, 0, 0.9, 0.5) forwards;
+}
+
+.flap__anim--back {
+  bottom: 0;
+  transform-origin: top center;
+  transform: rotateX(90deg);
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(180deg, var(--flap), #ded8ca);
+  animation: flap-land calc(var(--flip-ms) / 2) cubic-bezier(0.1, 0.6, 0.3, 1) calc(var(--flip-ms) / 2) forwards;
+}
+
+@keyframes flap-fall {
+  from { transform: rotateX(0deg); }
+  to   { transform: rotateX(-90deg); }
+}
+
+@keyframes flap-land {
+  from { transform: rotateX(90deg); }
+  to   { transform: rotateX(0deg); }
+}
+
+/* ---------- readouts ------------------------------------------------ */
+
+.readout {
+  font-family: "Space Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--chalk-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.lamp {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--chalk-dim);
+  opacity: 0.4;
+}
+
+.lamp[data-on="true"] {
+  background: var(--signal);
+  opacity: 1;
+  box-shadow: 0 0 8px var(--signal);
+  animation: lamp-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes lamp-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+/* ---------- controls ------------------------------------------------ */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.btn {
+  font-family: "Archivo Narrow", sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--chalk);
+  background: transparent;
+  border: 1px solid var(--rail-strong);
+  border-radius: 3px;
+  padding: 0.7rem 1.5rem;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.btn:hover {
+  background: rgba(237, 232, 220, 0.08);
+  border-color: var(--flap);
+}
+
+.btn--primary {
+  background: var(--flap);
+  border-color: var(--flap);
+  color: var(--ink);
+}
+
+.btn--primary:hover {
+  background: #fff;
+  border-color: #fff;
+}
+
+.btn--danger { color: var(--signal); border-color: rgba(194, 69, 46, 0.5); }
+.btn--danger:hover { background: rgba(194, 69, 46, 0.14); border-color: var(--signal); }
+
+.btn:focus-visible,
+.field:focus-visible,
+.nav a:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+/* ---------- fields --------------------------------------------------- */
+
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(0.75rem, 3vw, 1.75rem);
+}
+
+.field-group { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.field-label {
+  font-family: "Space Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--chalk-dim);
+}
+
+.field, select.field {
+  font-family: "Space Mono", monospace;
+  font-size: 1rem;
+  color: var(--chalk);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--rail-strong);
+  border-radius: 3px;
+  padding: 0.55rem 0.7rem;
+  width: 6rem;
+  text-align: center;
+}
+
+select.field { width: min(22rem, 70vw); text-align: left; }
+select.field option { background: var(--cabinet-deep); color: var(--chalk); }
+
+.field:hover { border-color: var(--flap); }
+
+/* ---------- departures table ---------------------------------------- */
+
+.departures {
+  width: min(56rem, 100%);
+  border-top: 1px solid var(--rail);
+}
+
+.dep-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: clamp(0.6rem, 3vw, 2rem);
+  padding: 0.85rem 0.2rem;
+  border-bottom: 1px solid var(--rail);
+}
+
+.dep-city {
+  font-family: "Archivo Narrow", sans-serif;
+  font-weight: 600;
+  font-size: clamp(0.95rem, 2.4vw, 1.2rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--flap);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dep-zone {
+  font-family: "Space Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--chalk-dim);
+  text-transform: none;
+}
+
+.dep-offset {
+  font-family: "Space Mono", monospace;
+  font-size: 0.68rem;
+  color: var(--chalk-dim);
+  white-space: nowrap;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: var(--chalk-dim);
+  cursor: pointer;
+  font-family: "Space Mono", monospace;
+  font-size: 0.9rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 3px;
+}
+.icon-btn:hover { color: var(--signal); background: rgba(194, 69, 46, 0.1); }
+
+.empty-note {
+  font-family: "Space Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--chalk-dim);
+  text-align: center;
+  padding: 2rem 0;
+}
+
+/* ---------- motion preferences --------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .flap__anim { display: none; }
+  .lamp[data-on="true"] { animation: none; }
+  * { transition-duration: 1ms !important; }
 }
